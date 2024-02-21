@@ -8,14 +8,15 @@ const Header = (props) => {
             <Helog src = {headimg} />
             </Logo>
             <NavMenu>
-                <a href="/home">
-                    <span>Home</span>
+                <a href="/recc">
+                    <span>Reccomendations</span>
                 </a>
                 <a href="/graph">
                     <span>Graph</span>
                 </a>
             </NavMenu>
         </Nav>
+        
     )
 }
 
