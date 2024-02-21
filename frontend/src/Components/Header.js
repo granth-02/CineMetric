@@ -5,7 +5,9 @@ const Header = (props) => {
     return(
         <Nav>
             <Logo>
-            <Helog src = {headimg} />
+                <a href="/">
+                    <Helog src = {headimg} />
+                </a>
             </Logo>
             <NavMenu>
                 <a href="/recc">
