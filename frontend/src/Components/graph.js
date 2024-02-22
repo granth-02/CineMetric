@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import axios from 'axios';
-import { Bar, Line, PolarArea } from 'react-chartjs-2';
+import { Bar, Line, PolarArea, Radar } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
-
 
 const Graph = (props) => {
     const [movieData, setMovieData] = useState([]);
@@ -35,22 +34,32 @@ const Graph = (props) => {
         const genreRatings = {};
         const titleAvgVotes = {};
         const releaseYearCount = {};
+        const genreDistribution = {}; // New object to store genre distribution
+      
         movieData.forEach((movie) => {
           // Genre vs Average Rating
-          const genre = movie["Genres"];
-          const rating = movie["Average Vote"];
-          if (!genreRatings[genre]) {
-            genreRatings[genre] = { total: rating, count: 1 };
+          let genres = [];
+          if (Array.isArray(movie["Genres"])) {
+            genres = movie["Genres"];
           } else {
-            genreRatings[genre].total += rating;
-            genreRatings[genre].count += 1;
+            genres.push(movie["Genres"]);
           }
-
+      
+          genres.forEach(genre => {
+            const rating = movie["Average Vote"];
+            if (!genreRatings[genre]) {
+              genreRatings[genre] = { total: rating, count: 1 };
+            } else {
+              genreRatings[genre].total += rating;
+              genreRatings[genre].count += 1;
+            }
+          });
+      
           // Title vs Average Vote
           const title = movie["Title"];
           const avgVote = movie["Average Vote"];
           titleAvgVotes[title] = avgVote;
-
+      
           // Distribution of movies by release year
           const releaseYear = movie["Release Year"];
           if (!releaseYearCount[releaseYear]) {
@@ -58,6 +67,15 @@ const Graph = (props) => {
           } else {
             releaseYearCount[releaseYear] += 1;
           }
+      
+          // Calculate genre distribution
+          genres.forEach(genre => {
+            if (!genreDistribution[genre]) {
+              genreDistribution[genre] = 1;
+            } else {
+              genreDistribution[genre] += 1;
+            }
+          });
         });
 
         const genreLabels = Object.keys(genreRatings);
@@ -68,6 +86,9 @@ const Graph = (props) => {
 
         const releaseYearLabels = Object.keys(releaseYearCount);
         const releaseYearData = releaseYearLabels.map(year => releaseYearCount[year]);
+
+        const genreDistributionLabels = Object.keys(genreDistribution); // Genre labels for radar chart
+        const genreDistributionData = genreDistributionLabels.map(genre => genreDistribution[genre]); // Genre distribution data for radar chart
 
         return {
           genreData: {
@@ -121,7 +142,23 @@ const Graph = (props) => {
                 borderWidth: 1,
               },
             ],
-          }
+          },
+          genreDistributionData: {
+            labels: genreDistributionLabels,
+            datasets: [
+              {
+                label: "Genre Distribution",
+                data: genreDistributionData,
+                backgroundColor: "rgba(255, 206, 86, 0.6)",
+                borderColor: "rgba(255, 206, 86, 1)",
+                borderWidth: 1,
+                pointBackgroundColor: "rgba(255, 206, 86, 1)", // Set the background color of the data points
+                pointBorderColor: "rgba(255, 206, 86, 1)", // Set the border color of the data points
+                pointRadius: 5, // Set the radius of the data points
+                pointHoverRadius: 7, // Set the radius of the data points on hover
+              },
+            ],
+          },
         };
       };
 
@@ -185,6 +222,25 @@ const Graph = (props) => {
           });
           setChartInstance(newReleaseYearChartInstance);
         }
+
+        const ctxGenreDistribution = document.getElementById("genreDistributionChart");
+        if (ctxGenreDistribution) {
+          const newGenreDistributionChartInstance = new Chart(ctxGenreDistribution, {
+            type: 'radar',
+            data: generateChartData().genreDistributionData,
+            options: {
+              maintainAspectRatio: false,
+              color: 'gold',
+              scale: {
+                ticks: {
+                  beginAtZero: true,
+                  stepSize: 1,
+                },
+              },
+            },
+          });
+          setChartInstance(newGenreDistributionChartInstance);
+        }
       }
     }, [movieData]);
 
@@ -203,6 +259,10 @@ const Graph = (props) => {
             <h1>Distribution of Movies by Release Year</h1>
             <canvas id="releaseYearChart"></canvas>
           </ChartContainer3>
+          <ChartContainer4>
+            <h1>Genre Distribution</h1>
+            <canvas id="genreDistributionChart"></canvas>
+          </ChartContainer4>
         </GridContainer>
       </div>
     );
@@ -226,17 +286,23 @@ const ChartContainer1 = styled.div`
 
 const ChartContainer2 = styled.div`
   height: 400px;
-  width: 800px;
-  padding-top: 100px;
-  grid-column: 1 / span 2;
-  grid-row: 2 / span 2;
+  width: 600px;
+  grid-column: 2 / span 1;
+  grid-row: 1 / span 1;
 `;
 
 const ChartContainer3 = styled.div`
   height: 400px;
   width: 600px;
+  grid-column: 1 / span 1;
+  grid-row: 2 / span 1;
+`;
+
+const ChartContainer4 = styled.div`
+  height: 400px;
+  width: 600px;
   grid-column: 2 / span 1;
-  grid-row: 1 / span 1;
+  grid-row: 2 / span 1;
 `;
 
 export default Graph;

@@ -1,5 +1,8 @@
 import requests
+import time
 import pandas as pd
+import multiprocessing
+from functools import partial
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -26,37 +29,61 @@ def meta_data(api_key, movie_name):
         return None
     
 
+def process_movie(api_key, movie_name):
+    movie_details = meta_data(api_key, movie_name)
+    if movie_details is None:
+        return None
+    
+    if 'Season' in movie_details.get('title', '') or 'Limited Series' in movie_details.get('title', ''):
+        return None
+
+    director = next((crew['name'] for crew in movie_details.get('credits', {}).get('crew', []) if crew['job'] == 'Director'), 'N/A')
+    release_year = movie_details.get('release_date', 'N/A')[:4]
+    return {
+        "Title": movie_details.get('title', 'N/A'),
+        "Overview": movie_details.get('overview', 'N/A'),
+        "Release Year": release_year,
+        "Runtime(Mins)": movie_details.get('runtime', 'N/A'),
+        "Average Vote": movie_details.get('vote_average', 'N/A'),
+        "Popularity": movie_details.get('popularity', 'N/A'),
+        "Genres": ", ".join([genre['name'] for genre in movie_details.get('genres', [])[:1]]),
+        "Cast": ", ".join(actor['name'] for actor in movie_details.get('credits', {}).get('cast', [])[:5]),
+        "Director": director
+    }
+
 def search():
-    watched_mov = pd.read_csv("movies.csv")
-    num_mov = int(input("Enter the number of movies you want the data from: "))
-    mov_names = watched_mov['original_title'].head(num_mov)
+    start_time_total = time.time()
+
+    watched_mov = pd.read_csv("Dhotre_Netflix.csv")
+    mov_names = watched_mov['Title']
     api_key = "d1e0e678b2a0325b5a7da373485f3471"
 
-    user_mov_list = []
+    # Use multiprocessing to process movies concurrently
+    start_time_filter = time.time()
+    pool = multiprocessing.Pool()
+    func = partial(process_movie, api_key)
+    user_mov_list = pool.map(func, mov_names)
+    pool.close()
+    pool.join()
+    end_time_filter = time.time()
 
-    for movie_name in mov_names:
-        movie_details = meta_data(api_key, movie_name)
-        director = next((crew['name'] for crew in movie_details.get('credits', {}).get('crew', []) if crew['job'] == 'Director'), 'N/A')
-        if movie_details:
-            release_year = movie_details.get('release_date', 'N/A')[:4]
-            user_mov_list.append({
-                "Title": movie_details.get('title', 'N/A'),
-                "Overview": movie_details.get('overview', 'N/A'),
-                "Release Year": release_year,
-                "Runtime(Mins)": movie_details.get('runtime', 'N/A'),
-                "Average Vote": movie_details.get('vote_average', 'N/A'),
-                "Popularity": movie_details.get('popularity', 'N/A'),
-                "Genres": ", ".join([genre['name'] for genre in movie_details.get('genres', [])[:1]]),
-                "Cast": ", ".join(actor['name'] for actor in movie_details.get('credits', {}).get('cast', [])[:5]),
-                "Director": director
-            })
+    # Remove None values (failed movie retrievals)
+    user_mov_list = [movie for movie in user_mov_list if movie is not None]
 
+    start_time_write = time.time()
     if os.path.exists("User_Data.csv"):
         os.remove("User_Data.csv")
 
     df_user_mov = pd.DataFrame(user_mov_list)
     df_user_mov.to_csv("User_Data.csv", index=False)
+    end_time_write = time.time()
+
+    end_time_total = time.time()
+
     print("Movies are stored in User_Data")
+    print(f"Total execution time: {end_time_total - start_time_total} seconds")
+    print(f"Time taken to filter data: {end_time_filter - start_time_filter} seconds")
+    print(f"Time taken to use API and collect data: {end_time_write - start_time_write} seconds")
 
 def viz():
     user_data = pd.read_csv("User_Data.csv")
