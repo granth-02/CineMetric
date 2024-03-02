@@ -35,7 +35,7 @@ const Graph = (props) => {
         const titleAvgVotes = {};
         const releaseYearCount = {};
         const genreDistribution = {}; // New object to store genre distribution
-      
+        
         movieData.forEach((movie) => {
           // Genre vs Average Rating
           let genres = [];
@@ -44,7 +44,7 @@ const Graph = (props) => {
           } else {
             genres.push(movie["Genres"]);
           }
-      
+        
           genres.forEach(genre => {
             const rating = movie["Average Vote"];
             if (!genreRatings[genre]) {
@@ -54,12 +54,12 @@ const Graph = (props) => {
               genreRatings[genre].count += 1;
             }
           });
-      
+        
           // Title vs Average Vote
           const title = movie["Title"];
           const avgVote = movie["Average Vote"];
           titleAvgVotes[title] = avgVote;
-      
+        
           // Distribution of movies by release year
           const releaseYear = movie["Release Year"];
           if (!releaseYearCount[releaseYear]) {
@@ -67,29 +67,35 @@ const Graph = (props) => {
           } else {
             releaseYearCount[releaseYear] += 1;
           }
-      
+        
           // Calculate genre distribution
           genres.forEach(genre => {
-            if (!genreDistribution[genre]) {
-              genreDistribution[genre] = 1;
-            } else {
-              genreDistribution[genre] += 1;
+            if (genre) {
+              const individualGenres = genre.split(', ');
+              individualGenres.forEach(individualGenre => {
+                if (!genreDistribution[individualGenre]) {
+                  genreDistribution[individualGenre] = 0;
+                }
+                genreDistribution[individualGenre] += 1;
+              });
             }
           });
         });
-
+        
+      
+        // Convert genre distribution object to arrays for chart rendering
+        const genreDistributionLabels = Object.keys(genreDistribution);
+        const genreDistributionData = genreDistributionLabels.map(genre => genreDistribution[genre]);
+      
         const genreLabels = Object.keys(genreRatings);
         const genreData = genreLabels.map(genre => genreRatings[genre].total / genreRatings[genre].count);
-
+      
         const titleLabels = Object.keys(titleAvgVotes);
         const titleData = titleLabels.map(title => titleAvgVotes[title]);
-
+      
         const releaseYearLabels = Object.keys(releaseYearCount);
         const releaseYearData = releaseYearLabels.map(year => releaseYearCount[year]);
-
-        const genreDistributionLabels = Object.keys(genreDistribution); // Genre labels for radar chart
-        const genreDistributionData = genreDistributionLabels.map(genre => genreDistribution[genre]); // Genre distribution data for radar chart
-
+      
         return {
           genreData: {
             labels: genreLabels,
@@ -148,19 +154,23 @@ const Graph = (props) => {
             datasets: [
               {
                 label: "Genre Distribution",
+                fill: true,
                 data: genreDistributionData,
-                backgroundColor: "rgba(255, 206, 86, 0.6)",
-                borderColor: "rgba(255, 206, 86, 1)",
+                backgroundColor: "rgba(75,192,192,0.2)",
+                borderColor: "gold",
                 borderWidth: 1,
-                pointBackgroundColor: "rgba(255, 206, 86, 1)", // Set the background color of the data points
-                pointBorderColor: "rgba(255, 206, 86, 1)", // Set the border color of the data points
-                pointRadius: 5, // Set the radius of the data points
-                pointHoverRadius: 7, // Set the radius of the data points on hover
+                pointBackgroundColor: "gold",   
+                pointBorderColor: "gold", 
+                pointRadius: 2, 
+                pointHoverRadius: 7, 
               },
             ],
           },
         };
       };
+      
+      
+      
 
       if (movieData.length > 0) {
         const ctxGenre = document.getElementById("genreRatingChart");
@@ -229,12 +239,12 @@ const Graph = (props) => {
             type: 'radar',
             data: generateChartData().genreDistributionData,
             options: {
-              maintainAspectRatio: false,
+              
               color: 'gold',
               scale: {
                 ticks: {
-                  beginAtZero: true,
-                  stepSize: 1,
+                  beginAtZero: false,
+                  
                 },
               },
             },
@@ -278,31 +288,33 @@ const GridContainer = styled.div`
 `;
 
 const ChartContainer1 = styled.div`
-  height: 400px;
+  height: 500px;
   width: 600px;
   grid-column: 1 / span 1;
   grid-row: 1 / span 1;
 `;
 
 const ChartContainer2 = styled.div`
-  height: 400px;
+  height: 500px;
   width: 600px;
   grid-column: 2 / span 1;
   grid-row: 1 / span 1;
 `;
 
 const ChartContainer3 = styled.div`
-  height: 400px;
+  height: 500px;
   width: 600px;
   grid-column: 1 / span 1;
   grid-row: 2 / span 1;
+  padding-top: 100px;
 `;
 
 const ChartContainer4 = styled.div`
-  height: 400px;
+  height: 500px;
   width: 600px;
   grid-column: 2 / span 1;
   grid-row: 2 / span 1;
+  padding-top: 100px;
 `;
 
 export default Graph;
