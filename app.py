@@ -1,6 +1,8 @@
 from movie import search
-# from recc import recommend
+from recc import recommend
 import asyncio
+import json
+import os
 import pandas as pd
 
 async def main():
@@ -15,9 +17,26 @@ if __name__ == "__main__":
     asyncio.run(main())
     # viz()
 
-    # user_data = pd.read_csv('User_Data.csv')
-    # movie_titles = user_data['Title'].tolist()
-    # for movie_title in movie_titles:
-    #     recommend(movie_title)
+    all_recommendations = []
+
+
+    with open('User_Data.json', 'r') as file:
+        user_data = json.load(file)
+
+    movie_titles = [entry['Title'] for entry in user_data]
+
+
+    for movie_title in movie_titles:
+        recommendations = recommend(movie_title)
+        all_recommendations.extend(recommendations)
+
+
+    if os.path.exists("all_recommendations.json"):
+        os.remove("all_recommendations.json")
+
+    with open('all_recommendations.json', 'w') as file:
+        json.dump(all_recommendations, file, indent=4)
+
+    
 
 

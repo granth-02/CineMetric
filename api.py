@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import pandas as pd
+import json
 import math
+from recc import recommend
 
-user_data = pd.read_csv('User_Data.csv')
+# Load data from JSON file
+with open('User_Data.json', 'r') as file:
+    user_data = json.load(file)
+
 app = FastAPI()
 
 origins = [
@@ -26,7 +30,7 @@ def sanitize_data(data):
 @app.get('/graph')
 async def data():
     movie_data = []
-    for index, row in user_data.iterrows():
+    for row in user_data:
         import_data = {
             "Title": row["Title"],
             "Release Year": row["Release Year"],
@@ -40,6 +44,12 @@ async def data():
         movie_data.append(sanitized_data)
 
     return movie_data
+
+@app.get("/recc")
+async def recc():
+    with open('all_recommendations.json', 'r') as file:
+        reccomendations = json.load(file)
+    return {'reccomendations': reccomendations}
 
 @app.get("/")
 async def root():

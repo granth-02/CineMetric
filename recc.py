@@ -5,6 +5,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import nltk
 from nltk.stem.porter import PorterStemmer
+import json
+import os
 
 
 credits_df = pd.read_csv("10000 Credits Data.csv") # Credits
@@ -91,12 +93,13 @@ def recommend(movie_title):
     mov_index = movies_df[movies_df['title'] == movie_title].index
     if len(mov_index) == 0:
         print("Movie not found.")
-        return
+        return []
     mov_index = mov_index[0]
     score = similar[mov_index]
     similar_movies = sorted(list(enumerate(score)), reverse=True, key=lambda x: x[1])[1:11]
-    print("\nWatched Movie:",movie_title)
+    print("\nWatched Movie:", movie_title)
     print("Similar Movies: \n")
+    recommendations = []
     recc_titles = set()
     for i, _ in similar_movies:
         title = movies_df.iloc[i]['title']
@@ -104,8 +107,12 @@ def recommend(movie_title):
         if title not in recc_titles:
             print(f"{title} (Rating: {votes})")
             recc_titles.add(title)
+            recommendations.append({"Title": title, "Rating": votes})
         else:
             continue 
+    return recommendations
+
+
 
 
 
