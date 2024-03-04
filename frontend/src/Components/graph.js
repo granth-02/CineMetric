@@ -34,7 +34,7 @@ const Graph = (props) => {
         const genreRatings = {};
         const titleAvgVotes = {};
         const releaseYearCount = {};
-        const genreDistribution = {}; // New object to store genre distribution
+        const genreDistribution = {}; 
         
         movieData.forEach((movie) => {
           // Genre vs Average Rating

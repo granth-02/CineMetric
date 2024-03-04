@@ -7,6 +7,7 @@ import nltk
 from nltk.stem.porter import PorterStemmer
 import json
 import os
+import requests
 
 
 credits_df = pd.read_csv("10000 Credits Data.csv") # Credits
@@ -88,6 +89,10 @@ movies_df['soup'] = movies_df['soup'].apply(stem)
 # Cosine Similarity
 similar = cosine_similarity(vectors)
 
+TMDB_API_KEY = "d1e0e678b2a0325b5a7da373485f3471"
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
+POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"  # Change w500 to adjust poster size if needed
+
 # Recommendation function
 def recommend(movie_title):
     mov_index = movies_df[movies_df['title'] == movie_title].index
@@ -104,10 +109,21 @@ def recommend(movie_title):
     for i, _ in similar_movies:
         title = movies_df.iloc[i]['title']
         votes = movies_df.iloc[i]['vote_average']
+        # Fetch movie details from TMDb API to get the poster URL
+        try:
+            response = requests.get(f"{TMDB_BASE_URL}/search/movie", 
+                                    params={"api_key": TMDB_API_KEY, "query": title})
+            data = response.json()
+            poster_path = data["results"][0]["poster_path"] if data["results"] else None
+            poster_url = POSTER_BASE_URL + poster_path if poster_path else None
+        except Exception as e:
+            print(f"Error fetching movie details for {title}: {e}")
+            poster_url = None
+
         if title not in recc_titles:
             print(f"{title} (Rating: {votes})")
             recc_titles.add(title)
-            recommendations.append({"Title": title, "Rating": votes})
+            recommendations.append({"Title": title, "Rating": votes, "PosterURL": poster_url})
         else:
             continue 
     return recommendations

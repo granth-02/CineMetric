@@ -13,9 +13,8 @@ async def main():
 
 
 if __name__ == "__main__":
-    # movie_titles = 
-    asyncio.run(main())
-    # viz()
+    movie_titles =  asyncio.run(main())
+    
 
     all_recommendations = []
 
