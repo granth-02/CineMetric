@@ -7,7 +7,7 @@ import os
 import json
 
 async def meta_data(session, api_key, movie_name):
-    base_url = "https://api.themoviedb.org/3/search/movie"
+    base_url = ""
     parameters = {
         "api_key": api_key,
         "query": movie_name,
